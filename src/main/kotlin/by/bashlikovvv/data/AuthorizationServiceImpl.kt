@@ -7,7 +7,7 @@ import com.auth0.jwt.exceptions.TokenExpiredException
 import java.util.*
 
 class AuthorizationServiceImpl : AuthenticationService {
-    private val secret = "secret"
+    private val secret = "access secret"
 
     private val refreshSecret = "refresh secret"
 

@@ -3,6 +3,11 @@ package by.bashlikovvv.data.remote.model
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 
+/**
+ * Транзакция вызова - уникальный идентификатор для обмена данными между пользователями
+ * перед началом звонка.
+ * Время жизни транзакции - 1 минута
+ * */
 data class CallTransaction(
     val callerId: UUID,
     val calledId: UUID,

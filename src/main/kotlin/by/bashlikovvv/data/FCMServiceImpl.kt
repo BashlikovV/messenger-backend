@@ -1,6 +1,7 @@
-package by.bashlikovvv.data.remote
+package by.bashlikovvv.data
 
 import by.bashlikovvv.data.local.UserService
+import by.bashlikovvv.data.remote.model.FCMMessageContract
 import by.bashlikovvv.domain.service.FCMService
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.messaging.Message
@@ -9,10 +10,16 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.*
 
-class FCMService(
+class FCMServiceImpl(
     private val firebaseMessaging: FirebaseMessaging,
     private val userService: UserService
 ) : FCMService {
+    override suspend fun sendMessage(userId: UUID, message: FCMMessageContract) {
+        withContext(Dispatchers.IO) {
+            firebaseMessaging.sendAsync(message.toMessage(userService.getFCMToken(userId)))
+        }
+    }
+
     override suspend fun sendNotification(userId: UUID): Unit =
         withContext(Dispatchers.IO) {
             firebaseMessaging.sendAsync(

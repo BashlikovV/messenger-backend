@@ -1,8 +1,9 @@
 package by.bashlikovvv.di
 
 import by.bashlikovvv.data.AuthorizationServiceImpl
+import by.bashlikovvv.data.FCMServiceImpl
 import by.bashlikovvv.data.local.UserService
-import by.bashlikovvv.data.remote.WebSocketsService
+import by.bashlikovvv.data.WebSocketsServiceImpl
 import by.bashlikovvv.domain.service.AuthenticationService
 import by.bashlikovvv.domain.service.FCMService
 import org.jetbrains.exposed.sql.Database
@@ -22,8 +23,8 @@ val dataModule = module {
         UserService(get(), get())
     }
 
-    single<WebSocketsService> {
-        WebSocketsService()
+    single<WebSocketsServiceImpl> {
+        WebSocketsServiceImpl()
     }
 
     single<AuthenticationService> {
@@ -31,6 +32,6 @@ val dataModule = module {
     }
 
     single<FCMService> {
-        by.bashlikovvv.data.remote.FCMService(get(), get())
+        FCMServiceImpl(get(), get())
     }
 }

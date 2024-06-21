@@ -1,7 +1,7 @@
 package by.bashlikovvv.api.controller.routing
 
-import by.bashlikovvv.api.dto.response.RefreshTokenResponseDto
 import by.bashlikovvv.api.dto.response.AuthResponseDto
+import by.bashlikovvv.api.dto.response.RefreshTokenResponseDto
 import by.bashlikovvv.data.local.ExposedUser
 import by.bashlikovvv.data.local.UserService
 import by.bashlikovvv.domain.service.AuthenticationService

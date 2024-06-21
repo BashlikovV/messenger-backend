@@ -1,4 +1,4 @@
-package by.bashlikovvv.data.remote
+package by.bashlikovvv.data
 
 import by.bashlikovvv.api.dto.websocket.RequestCancelCallTransactionDto
 import by.bashlikovvv.api.dto.websocket.RequestUserIpByPhoneRequestDto
@@ -18,20 +18,46 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.util.*
 
-class WebSocketsService {
+/**
+ * Сервис для управления web сокетами.
+ * Отвечает за отправку сообщений пользователям, хранит подключения [Connection]
+ * к пользователям и транзакции [CallTransaction] вызовов
+ * */
+class WebSocketsServiceImpl {
+    /**
+     * Список подключенныйх пользователей
+     * */
     private val connections = Collections.synchronizedSet<Connection?>(LinkedHashSet())
 
+    /**
+     * Список открытых транзакций вызовов
+     * */
     private val callTransactions = Collections.synchronizedSet<CallTransaction?>(LinkedHashSet())
 
+    /**
+     * Добавляет пользоваталя в список подключенных, либо пересоздает подключение при ппереподключении
+     * @param session - сессия [WebSocketSession] для отправки сообщений пользователю
+     * @param userId - уникальный иденитификатор [UUID] пользователя для идентификации сессий
+     * */
     fun addUser(session: WebSocketSession, userId: UUID) {
         connections.removeIf { it.userId == userId }
         connections += Connection(session, userId)
     }
 
+    /**
+     * Удаляет пользователя при дисконнекте
+     * @param userId - уникальный иденитификатор [UUID] пользователя для идентификации сессий
+     * */
     fun removeUser(userId: UUID) {
         connections.removeIf { it.userId == userId }
     }
 
+    /**
+     * Отправляет пользователю запрос на получение ip адреса.
+     * @param requestedUserUUID - уникальный идентификатор [UUID] вызываемого пользователя
+     * @param callerId - уникальный идентификатор [UUID] вызывающего пользователя
+     * @return [UUID] - уникальный идентификатор транзакции [CallTransaction]
+     * */
     suspend fun requestUserIpByPhoneNumber(requestedUserUUID: UUID, callerId: UUID): UUID {
         val transaction = callTransactions
             .singleOrNull { it.callerId == callerId && it.calledId == requestedUserUUID }
@@ -59,6 +85,12 @@ class WebSocketsService {
         }
     }
 
+    /**
+     * Используя идентификатор транзакции [transactionUUID] возвращает пользователю, отправившему запрос,
+     * ip адрес [requestedIp]
+     * @param transactionUUID - уникальный идентификатор [UUID] транзакции [CallTransaction]
+     * @param requestedIp - ip адрес для ответа
+     * */
     suspend fun responseUserIpByTransactionUUID(transactionUUID: UUID, requestedIp: String) {
         val transaction: CallTransaction = callTransactions
             .firstOrNull { it.transactionIdentifier == transactionUUID } ?: throw TransactionDoesNotExistsException()
@@ -70,6 +102,10 @@ class WebSocketsService {
         connection.session.outgoing.sendRequest(request)
     }
 
+    /**
+     * Отправляет пользователю уведомление о том, что транзакция [CallTransaction] закрыта
+     * @param userId - уникальный иденитификатор [UUID] пользователя для идентификации сессий
+     * */
     private suspend fun cancelCallTransactionByUserUUID(userId: UUID) {
         connections
             .firstOrNull { it.userId == userId }
@@ -78,6 +114,9 @@ class WebSocketsService {
             ?.sendRequest(RequestCancelCallTransactionDto())
     }
 
+    /**
+     * Создает новую транзакцию [CallTransaction]
+     * */
     private fun createCallTransaction(
         calledId: UUID, callerId: UUID
     ): CallTransaction {
@@ -98,6 +137,9 @@ class WebSocketsService {
         return transaction
     }
 
+    /**
+     * Обобщение для отправки стандартизированных сообщений [WebSocketServiceRequestContract]
+     * */
     private suspend inline fun SendChannel<Frame>.sendRequest(
         request: WebSocketServiceRequestContract
     ) = send(Frame.Text(Json.encodeToString(request.toRequest())))
